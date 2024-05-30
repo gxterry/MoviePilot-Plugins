@@ -240,7 +240,7 @@ class ZspaceMediaFresh(_PluginBase):
                                                     title="【刷新极影视】",
                                                     text=f"分类：{classify} 刷新成功\n"
                                                          f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"
-                                                         f"用时： {int(start_time - end_time)} 秒")
+                                                         f"用时： {int(end_time - start_time)} 秒")
                                             break
                                 else:
                                     logger.info(f"极影视获取分类列表出错：{rescanres_json}")
