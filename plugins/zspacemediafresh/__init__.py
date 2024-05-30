@@ -514,7 +514,8 @@ class ZspaceMediaFresh(_PluginBase):
                                         'props': {
                                             'type': 'info',
                                             'variant': 'tonal',
-                                            'text': '- 网盘媒体库路径：挂载到极影视网盘的根路径 例如：在极影视看到资源路径是  /cd2/115/电影/华语电影/杀破狼/杀破狼.mp4 此处填 /cd2即可 ' + '\n' +
+                                            'text': '- 网盘媒体库路径：挂载到极影视网盘的根路径 '  + '\n' +
+                                                    '例如：在极影视看到资源路径是  /cd2/115/电影/华语电影/杀破狼/杀破狼.mp4 此处填 /cd2即可 ' + '\n' +
                                                     '- cookie：极空间web端cookie' + '\n' +
                                                     '- 详细说明：https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/docs/zspacemediafresh.md',
                                             'style': 'white-space: pre-line;'
