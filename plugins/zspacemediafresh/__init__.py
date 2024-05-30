@@ -131,6 +131,7 @@ class ZspaceMediaFresh(_PluginBase):
         """
         刷新极影视
         """
+        classify_list = []
         if not self._flushall:
             # 参数验证
             if not self._startswith:
