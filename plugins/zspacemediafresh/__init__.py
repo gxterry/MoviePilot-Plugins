@@ -514,13 +514,10 @@ class ZspaceMediaFresh(_PluginBase):
                                         'props': {
                                             'type': 'info',
                                             'variant': 'tonal',
-                                            'text': '刷新全部分类：启用后忽略电影、电视剧分类配置,刷新极影视全部分类 \n'
-                                                    '时间范围：查询指定N天内入库的资源类型 \n'
-                                                    '等待时间：查询指定N天内入库的资源类型 \n'
-                                                    '网盘媒体库路径：挂载到极影视网盘的根路径 例如：在极影视看到资源路径是  /cd2/115/电影/华语电影/杀破狼/杀破狼.mp4 此处填 /cd2即可 \n'
-                                                    '电影分类名：智能分类这里填 电影 | 有自定义的分类并且需要被刷新 这里填你的自定义分类名，多个逗号间隔 \n'
-                                                    '电视剧分类名：智能分类这里填 电视剧| 有自定义的分类并且需要被刷新 这里填你的自定义分类名，多个逗号间隔 \n'
-                                                    'cookie：极空间web端cookie,重新登录web段可能会使cookie失效，如失效请更新'
+                                            'text': '网盘媒体库路径：挂载到极影视网盘的根路径 例如：在极影视看到资源路径是  /cd2/115/电影/华语电影/杀破狼/杀破狼.mp4 此处填 /cd2即可 '
+                                                    'cookie：极空间web端cookie'
+                                                    '详细说明：https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/docs/zspacemediafresh.md',
+                                            'style': 'white-space: pre-line;'
                                         }
                                     }
                                 ]
