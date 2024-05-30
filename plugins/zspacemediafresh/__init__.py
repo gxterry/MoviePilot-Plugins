@@ -198,7 +198,7 @@ class ZspaceMediaFresh(_PluginBase):
         try:
             with RequestUtils(cookies=self._zspcookie).post_res(list_url) as rsp_body:
                     res = rsp_body.json()
-                    logger.info(f"获取极影视分类 ：{res}")
+                    logger.debug(f"获取极影视分类 ：{res}")
                     if res and res["code"] == "200":
                         if res["data"] and isinstance(res["data"], list):
                             # 获取分类ID
@@ -215,13 +215,14 @@ class ZspaceMediaFresh(_PluginBase):
                                 formdata = {"classification_id": name_id_dict[classify],"device_id":device_id,"token":token,"device":"PC电脑","plat":"web"}
                                 rescanres = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},cookies=self._zspcookie).post_res(rescan_url,formdata)
                                 rescanres_json = rescanres.json()
+                                logger.debug(f"提交刷新请求--rescanres_json：{rescanres_json}")
                                 start_time = time.time()# 记录开始时间
                                 if rescanres_json["code"] =="200" and rescanres_json["data"]["task_id"]:
                                     logger.info(f"分类：{classify}开始刷新，任务ID：{rescanres_json['data']['task_id']}")
                                     # 查询刷新结果
                                     result_url = "%s/zvideo/classification/rescan/result?&rnd=%s&webagent=v2" % (self._zsphost,self.generate_string())
                                     formdata["task_id"] = rescanres_json['data']['task_id']
-                                    logger.info(f"返回数据-----》：{formdata}")
+                                    logger.debug(f"返回数据-----》：{formdata}")
                                     while True:
                                         #轮询状态
                                         resultRep = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},
