@@ -254,7 +254,7 @@ class ZspaceMediaFresh(_PluginBase):
     @staticmethod
     def generate_string():
         timestamp = str(time.time())  # 获取当前的时间戳
-        four_digit_random = str(random.randint(0,9999))  # 生成四位的随机数
+        four_digit_random = str(random.randint(1000,9999))  # 生成四位的随机数
         return f"{timestamp}_{four_digit_random}"  # 返回格式化后的字符串
 
     @staticmethod
