@@ -1,0 +1,11 @@
+{
+    "ZspaceMediaFresh": {
+        "name": "刷新极影视",
+        "description": "定时刷新极影视",
+        "labels": "刷新极影视",
+        "version": "1.1",
+        "icon": "Zspace_A.png",
+        "author": "gxterry",
+        "level": 1
+    }
+}
