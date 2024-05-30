@@ -13,7 +13,7 @@ from app.db.transferhistory_oper import TransferHistoryOper
 from app.core.config import settings
 from app.log import logger
 from app.plugins import _PluginBase
-from app.schemas.types import EventType
+from app.schemas.types import EventType, NotificationType
 from app.utils.http import RequestUtils
 
 
