@@ -197,7 +197,7 @@ class ZspaceMediaFresh(_PluginBase):
         token = cookie['token']
         device_id = cookie['device_id']
         msgtext= None
-        total_msgtext = None
+        total_msgtext = ""
         # 获取分类列表
         list_url = "%s/zvideo/classification/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string() )
         try:
