@@ -2,7 +2,7 @@
     "ZspaceMediaFresh": {
         "name": "刷新极影视",
         "description": "定时刷新极影视",
-        "labels": "刷新极影视",
+        "labels": "极空间",
         "version": "1.1",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png",
         "author": "gxterry",
