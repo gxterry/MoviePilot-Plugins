@@ -23,7 +23,7 @@ class ZspaceMediaFresh(_PluginBase):
     # 插件描述
     plugin_desc = "定时刷新极影视。"
     # 插件图标
-    plugin_icon = "Zspace_B.png"
+    plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png"
     # 插件版本
     plugin_version = "1.1"
     # 插件作者
