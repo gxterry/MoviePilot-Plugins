@@ -299,7 +299,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 2
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -315,7 +315,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 2
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -331,7 +331,28 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 2
+                                    'md': 4
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VSwitch',
+                                        'props': {
+                                            'model': 'flushall',
+                                            'label': '刷新全部分类',
+                                        }
+                                    }
+                                ]
+                            },
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [                         
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -347,7 +368,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 2
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -358,23 +379,7 @@ class ZspaceMediaFresh(_PluginBase):
                                         }
                                     }
                                 ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 2
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'flushall',
-                                            'label': '刷新全部分类',
-                                        }
-                                    }
-                                ]
-                            },
+                            }
                         ]
                     },
                     {
