@@ -251,7 +251,7 @@ class ZspaceMediaFresh(_PluginBase):
                                             break
                                 else:
                                     logger.info(f"极影视获取分类列表出错：{rescanres_json}")
-                            if  self._notifyaggregation and self._notif:
+                            if  self._notifyaggregation and self._notify:
                                 self.post_message(
                                         mtype=NotificationType.Plugin,
                                         title="【刷新极影视】",
