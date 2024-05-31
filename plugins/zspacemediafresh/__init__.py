@@ -246,7 +246,7 @@ class ZspaceMediaFresh(_PluginBase):
                                                     mtype=NotificationType.Plugin,
                                                     title="【刷新极影视】",
                                                     text= msgtext)
-                                            elif self.notifyaggregation and self._notify :
+                                            elif self._notifyaggregation and self._notify :
                                                msgtext=msgtext+msgtext
                                             break
                                 else:
