@@ -50,6 +50,7 @@ class ZspaceMediaFresh(_PluginBase):
     _flushall = False
     _startswith = None
     _notify = False
+    _notifyaggregation = False
     _EMBY_HOST = settings.EMBY_HOST
     _EMBY_APIKEY = settings.EMBY_API_KEY
     _scheduler: Optional[BackgroundScheduler] = None
@@ -71,6 +72,7 @@ class ZspaceMediaFresh(_PluginBase):
             self._flushall=config.get("flushall")
             self._startswith=config.get("startswith")
             self._notify = config.get("notify")
+            self._notifyaggregation =config.get("notifyaggregation")
 
             if self._zsphost:           
                 if not self._zsphost.startswith("http"):
@@ -123,7 +125,8 @@ class ZspaceMediaFresh(_PluginBase):
                 "tvlib": self._tvlib,
                 "flushall": self._flushall,
                 "startswith":self._startswith,
-                "notify": self._notify
+                "notify": self._notify,
+                "notifyaggregation":self._notifyaggregation
             }
         )
 
@@ -193,7 +196,7 @@ class ZspaceMediaFresh(_PluginBase):
         cookie = RequestUtils.cookie_parse(self._zspcookie)
         token = cookie['token']
         device_id = cookie['device_id']
-
+        msgtext= None
         # 获取分类列表
         list_url = "%s/zvideo/classification/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string() )
         try:
@@ -235,16 +238,24 @@ class ZspaceMediaFresh(_PluginBase):
                                         else:
                                             logger.info(f"分类：{classify} 刷新任务执行结束,task_id：{rescanres_json['data']['task_id']}，task_status:{result_json['data']['task_status']}")
                                             end_time = time.time()  # 记录结束时间
-                                            if self._notify:
+                                            msgtext =f"分类：{classify} 刷新成功\n"
+                                            f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n"
+                                            f"用时： {int(end_time - start_time)} 秒\n"
+                                            if not self._notifyaggregation and self._notify:
                                                 self.post_message(
                                                     mtype=NotificationType.Plugin,
                                                     title="【刷新极影视】",
-                                                    text=f"分类：{classify} 刷新成功\n"
-                                                         f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"
-                                                         f"用时： {int(end_time - start_time)} 秒")
+                                                    text= msgtext)
+                                            elif self.notifyaggregation and self._notify :
+                                               msgtext=msgtext+msgtext
                                             break
                                 else:
                                     logger.info(f"极影视获取分类列表出错：{rescanres_json}")
+                            if  self._notifyaggregation and self._notif:
+                                self.post_message(
+                                        mtype=NotificationType.Plugin,
+                                        title="【刷新极影视】",
+                                        text=msgtext)
                     else:
                         logger.info(f"极影视获取分类列表出错：{res}")
         except Exception as e:
@@ -288,7 +299,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 2
                                 },
                                 'content': [
                                     {
@@ -304,7 +315,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 2
                                 },
                                 'content': [
                                     {
@@ -320,7 +331,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 2
                                 },
                                 'content': [
                                     {
@@ -336,7 +347,23 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 2
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VSwitch',
+                                        'props': {
+                                            'model': 'notifyaggregation',
+                                            'label': '聚合通知',
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 2
                                 },
                                 'content': [
                                     {
@@ -381,7 +408,8 @@ class ZspaceMediaFresh(_PluginBase):
                                         'component': 'VTextField',
                                         'props': {
                                             'model': 'days',
-                                            'label': '时间范围(天)'
+                                            'label': '时间范围(天)',
+                                            'placeholder': '2'
                                         }
                                     }
                                 ]
@@ -397,7 +425,8 @@ class ZspaceMediaFresh(_PluginBase):
                                         'component': 'VTextField',
                                         'props': {
                                             'model': 'waittime',
-                                            'label': '等待时间(秒)'
+                                            'label': '等待时间(秒)',
+                                            'placeholder': '60'
                                         }
                                     }
                                 ]
