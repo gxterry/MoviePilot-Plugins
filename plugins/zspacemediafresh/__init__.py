@@ -197,6 +197,7 @@ class ZspaceMediaFresh(_PluginBase):
         token = cookie['token']
         device_id = cookie['device_id']
         msgtext= None
+        total_msgtext = None
         # 获取分类列表
         list_url = "%s/zvideo/classification/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string() )
         try:
@@ -238,16 +239,14 @@ class ZspaceMediaFresh(_PluginBase):
                                         else:
                                             logger.info(f"分类：{classify} 刷新任务执行结束,task_id：{rescanres_json['data']['task_id']}，task_status:{result_json['data']['task_status']}")
                                             end_time = time.time()  # 记录结束时间
-                                            msgtext =f"分类：{classify} 刷新成功\n"
-                                            f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n"
-                                            f"用时： {int(end_time - start_time)} 秒\n"
+                                            msgtext =f"分类：{classify} 刷新成功\n"+f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n"+f"用时： {int(end_time - start_time)} 秒\n"
                                             if not self._notifyaggregation and self._notify:
                                                 self.post_message(
                                                     mtype=NotificationType.Plugin,
                                                     title="【刷新极影视】",
                                                     text= msgtext)
                                             elif self._notifyaggregation and self._notify :
-                                               msgtext=msgtext+msgtext
+                                               total_msgtext += msgtext
                                             break
                                 else:
                                     logger.info(f"极影视获取分类列表出错：{rescanres_json}")
@@ -255,7 +254,7 @@ class ZspaceMediaFresh(_PluginBase):
                                 self.post_message(
                                         mtype=NotificationType.Plugin,
                                         title="【刷新极影视】",
-                                        text=msgtext)
+                                        text=total_msgtext)
                     else:
                         logger.info(f"极影视获取分类列表出错：{res}")
         except Exception as e:
