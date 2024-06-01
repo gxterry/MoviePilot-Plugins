@@ -7,5 +7,17 @@
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png",
         "author": "gxterry",
         "level": 1
+    },
+    "DcokerCopilotHelper": {
+        "name": "DC助手",
+        "description": "助手坚叔 配合DcokerCopilot-帮你自动更新docker",
+        "labels": "Docker",
+        "version": "0.1",
+        "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png",
+        "author": "gxterry",
+        "level": 1
     }
+
+
 }
+

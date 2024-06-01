@@ -563,7 +563,8 @@ class ZspaceMediaFresh(_PluginBase):
             "enabled": False,
             "onlyonce": False,
             "cron": "5 1 * * *",
-            "days": 5
+            "days": 1,
+            "waittime":60
         }
 
     def get_page(self) -> List[dict]:
