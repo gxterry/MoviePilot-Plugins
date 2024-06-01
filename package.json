@@ -8,7 +8,7 @@
         "author": "gxterry",
         "level": 1
     },
-    "DcokerCopilotHelper": {
+    "DockerCopilotHelper": {
         "name": "DC助手",
         "description": "助手坚叔 配合DcokerCopilot-帮你自动更新docker",
         "labels": "Docker",

@@ -19,7 +19,7 @@ from app.schemas.types import EventType, NotificationType
 from app.utils.http import RequestUtils
 
 
-class DcokerCopilotHelper(_PluginBase):
+class DockerCopilotHelper(_PluginBase):
     # 插件名称
     plugin_name = "DC坚叔助手"
     # 插件描述
