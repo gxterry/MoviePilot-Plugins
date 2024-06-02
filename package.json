@@ -3,16 +3,16 @@
         "name": "刷新极影视",
         "description": "定时刷新极影视",
         "labels": "极空间",
-        "version": "1.1",
+        "version": "1.2",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png",
         "author": "gxterry",
         "level": 1
     },
     "DockerCopilotHelper": {
         "name": "DC助手",
-        "description": "助手坚叔 配合DcokerCopilot-帮你自动更新docker",
+        "description": "助手坚叔 配合DockerCopilot-帮你自动更新docker",
         "labels": "Docker",
-        "version": "0.1",
+        "version": "0.2",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png",
         "author": "gxterry",
         "level": 1
