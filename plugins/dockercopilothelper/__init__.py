@@ -43,6 +43,7 @@ class DockerCopilotHelper(_PluginBase):
     _update_cron = None
     _updatable_list = []
     _updatable_notify = False
+    _schedule_report = False
     # 自动更新
     _auto_update_cron = None
     _auto_update_list = []
@@ -50,9 +51,8 @@ class DockerCopilotHelper(_PluginBase):
     _delete_images = False
     # 备份
     _backup_cron = None
-    _backup = False
+    _backups_notify = False
     _host = None
-    _backups_cycle = None
 
     _secretKey = None
     _jwt =None
@@ -69,10 +69,10 @@ class DockerCopilotHelper(_PluginBase):
             self._auto_update_cron = config.get("autoupdatecron")
             self._auto_update_list = config.get("autoupdatelist")
             self._auto_update_notify = config.get("autoupdatenotify")
+            self._schedule_report = config.get("schedulereport")
             self._delete_images = config.get("deleteimages")
             self._backup_cron = config.get("backupcron")
-            self._backups_cycle = config.get("backupscycle") or 7
-            self._backup = config.get("backup")
+            self._backups_notify = config.get("backupsnotify")
             self._host = config.get("host")
             self._secretKey = config.get("secretKey")
 
@@ -155,10 +155,10 @@ class DockerCopilotHelper(_PluginBase):
                 "autoupdatecron":self._auto_update_cron,
                 "autoupdatelist":self._auto_update_list,
                 "autoupdatenotify":self._auto_update_notify,
+                "schedulereport":self._schedule_report,
                 "deleteimages":self._delete_images,
                 "backupcron":self._backup_cron,
-                "backupscycle":self._backups_cycle,
-                "backup":self._backup,
+                "backupsnotify":self._backups_notify,
                 "host":self._host,
                 "secretKey":self._secretKey
 
@@ -169,6 +169,52 @@ class DockerCopilotHelper(_PluginBase):
         """
         自动更新
         """
+        logger.info("DC助手-自动更新-准备执行")
+        if self._auto_update_cron :    
+            #获取用户选择的容器 循环更新
+            jwt =self.get_jwt()
+            containers = self.get_docker_list()
+            old_id_list =[]
+            for name in self._auto_update_list:
+                for container in containers:
+                    if container["name"] == name and container["haveUpdate"]:
+                       url= '%s/api/container/%s/update' % (self._host,container['id'])
+                       usingImage= {container['usingImage']}
+                       rescanres = (RequestUtils(headers={"Authorization": jwt})
+                            .post_res(url, {"containerName":name,"imageNameAndTag":usingImage}))
+                       data = rescanres.json()
+                       if data["code"]== 200 and data["msg"] =="success":
+                           #记录成功原始id
+                           old_id_list.append(container["id"])
+                           self.post_message(
+                                mtype=NotificationType.Plugin,
+                                title="【DC助手-自动更新】",
+                                text=f"【{name}】\n容器更新任务创建成功")
+                           if self._schedule_report:
+                               url= '%s/api/progress/%s' % (data["data"]["taskID"])
+                               rescanres = (RequestUtils(headers={"Authorization": jwt})
+                                    .get_res(url))
+                               while iteration < 5:
+                                            report_json = rescanres.json()
+                                            if report_json["code"] == 200:                                           
+                                                self.post_message(
+                                                    mtype=NotificationType.Plugin,
+                                                    title="【DC助手-更新进度】",
+                                                    text=f"【{name}】\n进度：{report_json['msg']}"
+                                                )
+                                                if report_json["msg"] == "更新成功":
+                                                    break
+                                            else:
+                                                pass
+                                            iteration += 1
+                                            time.sleep(10)  # 暂停N秒后继续下一次请求
+                                   
+                                   
+
+
+                        
+                
+        
     def updatable(self):
         """
         更新通知
@@ -183,11 +229,33 @@ class DockerCopilotHelper(_PluginBase):
                    self.post_message(
                        mtype=NotificationType.Plugin,
                        title="【DC助手-更新通知】",
-                       text=f"您有一个容器可以更新啦！\n【{docker['name']}】\n当前镜像:{docker['usingImage']}\n状态:{docker['status']}\n构建时间：{docker['createTime']}")
-    def backup(self):
+                       text=f"您有容器可以更新啦！\n【{docker['name']}】\n当前镜像:{docker['usingImage']}\n状态:{docker['status']} {docker['runningTime']}\n构建时间：{docker['createTime']}")
+                   
+                   
+    def backup(self) :
         """
         备份
         """
+        logger.info(f"DC-备份-准备执行")
+        backup_url ='%s/api/container/backup' % (self._host)
+        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
+                     .get_res(backup_url))
+        data = result.json()
+        if data["code"] == 200:
+            if self._backups_notify:
+                self.post_message(
+                mtype=NotificationType.Plugin,
+                title="【DC助手-备份成功】",
+                text=f"镜像备份成功！")     
+            logger.info(f"DC-备份完成")
+        else:
+            if self._backups_notify:
+                self.post_message(
+                    mtype=NotificationType.Plugin,
+                    title="【DC助手-备份失败】",
+                    text=f"镜像备份失败拉~！\n【失败原因】:{data['msg']}")     
+            logger.error(f"DC-备份失败 Error code: {data['code']}, message: {data['msg']}")
+        
 
     @eventmanager.register(EventType.PluginAction)
     def remote_sync(self, event: Event):
@@ -214,7 +282,7 @@ class DockerCopilotHelper(_PluginBase):
         获取授权
         """
         auth_url = "%s/api/auth" % (self._host)
-        rescanres = (RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"})
+        rescanres = (RequestUtils()
                      .post_res(auth_url, {"secretKey":self._secretKey}))
         data = rescanres.json()
         if data["code"] == 201:
@@ -453,7 +521,7 @@ class DockerCopilotHelper(_PluginBase):
                                                 'component': 'VCol',
                                                 'props': {
                                                     'cols': 12,
-                                                    'md': 3
+                                                    'md': 2
                                                 },
                                                 'content': [
                                                     {
@@ -469,7 +537,23 @@ class DockerCopilotHelper(_PluginBase):
                                                 'component': 'VCol',
                                                 'props': {
                                                     'cols': 12,
-                                                    'md': 3
+                                                    'md': 2
+                                                },
+                                                'content': [
+                                                    {
+                                                        'component': 'VSwitch',
+                                                        'props': {
+                                                            'model': 'schedulereport',
+                                                            'label': '进度汇报'
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                'component': 'VCol',
+                                                'props': {
+                                                    'cols': 12,
+                                                    'md': 2
                                                 },
                                                 'content': [
                                                     {
@@ -545,29 +629,13 @@ class DockerCopilotHelper(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'backupscycle',
-                                            'label': '备份周期'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 3
+                                    'md': 6
                                 },
                                 'content': [
                                      {
                                         'component': 'VSwitch',
                                         'props': {
-                                            'model': 'backup',
+                                            'model': 'backupsnotify',
                                             'label': '备份通知'
                                         }
                                     }
@@ -582,9 +650,10 @@ class DockerCopilotHelper(_PluginBase):
             "onlyonce": False,
             "updatablenotify": False,
             "autoupdatenotify": False,
+            "schedulereport":False,
             "deleteimages": False,
-            "backup": False,
-            "backupscycle": 7
+            "backupsnotify": False,
+
         }
 
     def get_page(self) -> List[dict]:
