@@ -25,7 +25,7 @@ class DockerCopilotHelper(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png"
     # 插件版本
-    plugin_version = "1.0"
+    plugin_version = "1.1"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
