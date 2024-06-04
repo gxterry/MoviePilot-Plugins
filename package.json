@@ -10,9 +10,9 @@
     },
     "DockerCopilotHelper": {
         "name": "DC助手",
-        "description": "助手坚叔 配合DockerCopilot-帮你自动更新docker",
+        "description": "配合DockerCopilot,完成更新通知、自动更改、自动备份功能",
         "labels": "Docker",
-        "version": "0.2",
+        "version": "1.0",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png",
         "author": "gxterry",
         "level": 1
