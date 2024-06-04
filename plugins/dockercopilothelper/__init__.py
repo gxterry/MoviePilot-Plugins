@@ -49,17 +49,19 @@ class DockerCopilotHelper(_PluginBase):
     _auto_update_list = []
     _auto_update_notify = False
     _delete_images = False
+    _intervallimit=6
+    _interval=10
     # 备份
     _backup_cron = None
     _backups_notify = False
     _host = None
-
     _secretKey = None
-    _jwt =None
+ 
     _scheduler: Optional[BackgroundScheduler] = None
 
     def init_plugin(self, config: dict = None):
-
+        # 停止现有任务
+        self.stop_service()
         if config:
             self._enabled = config.get("enabled")
             self._onlyonce = config.get("onlyonce")
@@ -73,6 +75,9 @@ class DockerCopilotHelper(_PluginBase):
             self._delete_images = config.get("deleteimages")
             self._backup_cron = config.get("backupcron")
             self._backups_notify = config.get("backupsnotify")
+            self._intervallimit = config.get("intervallimit")
+            self._interval = config.get("interval")
+            
             self._host = config.get("host")
             self._secretKey = config.get("secretKey")
 
@@ -143,6 +148,14 @@ class DockerCopilotHelper(_PluginBase):
 
     def get_state(self) -> bool:
         return self._enabled
+    
+    def clear_checkbox(self):
+        self.update_config(
+            {
+                "autoupdatelist":[],
+                "updatablelist":[]  
+            }
+        )
 
     def __update_config(self):
         self.update_config(
@@ -160,7 +173,9 @@ class DockerCopilotHelper(_PluginBase):
                 "backupcron":self._backup_cron,
                 "backupsnotify":self._backups_notify,
                 "host":self._host,
-                "secretKey":self._secretKey
+                "secretKey":self._secretKey,
+                "intervallimit":self._intervallimit,
+                "interval":self._interval
 
             }
         )
@@ -174,7 +189,13 @@ class DockerCopilotHelper(_PluginBase):
             #获取用户选择的容器 循环更新
             jwt =self.get_jwt()
             containers = self.get_docker_list()
-            old_id_list =[]
+            #清理无标签 and 不在使用种的镜像
+            if self._delete_images:
+               images_list = self.get_images_list()
+               for images in images_list:
+                   if not images["images"] and  images["tag"]:
+                        self.remove_image(images["id"])
+            # 自动更新
             for name in self._auto_update_list:
                 for container in containers:
                     if container["name"] == name and container["haveUpdate"]:
@@ -184,8 +205,6 @@ class DockerCopilotHelper(_PluginBase):
                             .post_res(url, {"containerName":name,"imageNameAndTag":usingImage}))
                        data = rescanres.json()
                        if data["code"]== 200 and data["msg"] =="success":
-                           #记录成功原始id
-                           old_id_list.append(container["id"])
                            self.post_message(
                                 mtype=NotificationType.Plugin,
                                 title="【DC助手-自动更新】",
@@ -194,7 +213,7 @@ class DockerCopilotHelper(_PluginBase):
                                url= '%s/api/progress/%s' % (data["data"]["taskID"])
                                rescanres = (RequestUtils(headers={"Authorization": jwt})
                                     .get_res(url))
-                               while iteration < 5:
+                               while iteration < self._intervallimit:
                                             report_json = rescanres.json()
                                             if report_json["code"] == 200:                                           
                                                 self.post_message(
@@ -207,14 +226,8 @@ class DockerCopilotHelper(_PluginBase):
                                             else:
                                                 pass
                                             iteration += 1
-                                            time.sleep(10)  # 暂停N秒后继续下一次请求
-                                   
-                                   
-
-
-                        
-                
-        
+                                            time.sleep(self._interval)  # 暂停N秒后继续下一次请求
+    
     def updatable(self):
         """
         更新通知
@@ -303,8 +316,38 @@ class DockerCopilotHelper(_PluginBase):
         if data["code"] == 0:
             return data["data"]
         else:
-            logger.error(f"DC-获取凭证异常 Error code: {data['code']}, message: {data['msg']}")
+            logger.error(f"DC-获取容器列表异常 Error code: {data['code']}, message: {data['msg']}")
             return []
+        
+    def get_images_list(self) ->List[Dict[str, Any]] :
+        """
+        镜像列表
+        """
+        images_url = "%s/api/images" % (self._host)
+        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
+                        .get_res(images_url))
+        data = result.json()
+        if data["code"] == 200:
+            return data["data"]
+        else:
+            logger.error(f"DC-获取镜像列表异常 Error code: {data['code']}, message: {data['msg']}")
+            return []
+       
+    def remove_image(self,sha) ->bool:
+        """
+        清理镜像
+        """
+        images_url = "%s/api/images/%s?force=false" % (self._host,sha)
+        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
+                        .get_res(images_url))
+        data = result.json()
+        if data["code"] == 200:
+            logger.error(f"DC-清理镜像成功: {sha}")
+            return True
+        else:
+            logger.error(f"DC-清理镜像异常 Error code: {data['code']}, message: {data['msg']}")
+            return False
+
 
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
@@ -374,6 +417,7 @@ class DockerCopilotHelper(_PluginBase):
                                         'props': {
                                             'model': 'host',
                                             'label': '服务器地址',
+                                            'hint': 'dockerCopilot服务地址 http(s)://ip:端口'
                                         }
                                     }
                                 ]
@@ -390,6 +434,7 @@ class DockerCopilotHelper(_PluginBase):
                                         'props': {
                                             'model': 'secretKey',
                                             'label': 'secretKey',
+                                            'hint': 'dockerCopilot秘钥 环境变量查看'
                                         }
                                     }
                                 ]
@@ -479,7 +524,8 @@ class DockerCopilotHelper(_PluginBase):
                                                                 'multiple': True,
                                                                 'model': 'updatablelist',
                                                                 'label': '更新通知容器',
-                                                                'items': updatable_list
+                                                                'items': updatable_list,
+                                                                'hint': '选择容器在有更新时发送通知'
                                                             }
                                                         }
                                                     ]
@@ -516,19 +562,60 @@ class DockerCopilotHelper(_PluginBase):
                                                         }
                                                     }
                                                 ]
-                                            },
+                                            },  
                                             {
                                                 'component': 'VCol',
                                                 'props': {
                                                     'cols': 12,
-                                                    'md': 2
+                                                     'md': 3
+                                                },
+                                                'content': [
+                                                    {
+                                                        'component': 'VTextField',
+                                                        'props': {
+                                                            'model': 'interval',
+                                                            'label': '跟踪间隔(秒)',
+                                                            'placeholder': '10',
+                                                            'hint': '开启进度汇报时,每多少秒检查一次进度状态，默认10秒'
+                                                        }
+                                                    }
+                                                ]
+                                            }, 
+                                            {
+                                                'component': 'VCol',
+                                                'props': {
+                                                    'cols': 12,
+                                                     'md': 3
+                                                },
+                                                'content': [
+                                                    {
+                                                        'component': 'VTextField',
+                                                        'props': {
+                                                            'model': 'intervallimit',
+                                                            'label': '检查次数',
+                                                            'placeholder': '6',
+                                                            'hint': '开启进度汇报，当达限制检查次数后放弃追踪,默认6次'
+                                                        }
+                                                    }
+                                                ]
+                                            }  
+                                    ]},
+                                    {
+                                        'component': 'VRow',
+                                        'content': [
+                                            {
+                                                'component': 'VCol',
+                                                'props': {
+                                                    'cols': 12,
+                                                    'md': 4
                                                 },
                                                 'content': [
                                                     {
                                                         'component': 'VSwitch',
                                                         'props': {
                                                             'model': 'autoupdatenotify',
-                                                            'label': '自动更新通知'
+                                                            'label': '自动更新通知',
+                                                            'hint': '更新任务创建成功发送通知'
                                                         }
                                                     }
                                                 ]
@@ -537,14 +624,15 @@ class DockerCopilotHelper(_PluginBase):
                                                 'component': 'VCol',
                                                 'props': {
                                                     'cols': 12,
-                                                    'md': 2
+                                                    'md': 4
                                                 },
                                                 'content': [
                                                     {
                                                         'component': 'VSwitch',
                                                         'props': {
                                                             'model': 'schedulereport',
-                                                            'label': '进度汇报'
+                                                            'label': '进度汇报',
+                                                            'hint': '追踪更新任务进度并发送通知'
                                                         }
                                                     }
                                                 ]
@@ -553,20 +641,20 @@ class DockerCopilotHelper(_PluginBase):
                                                 'component': 'VCol',
                                                 'props': {
                                                     'cols': 12,
-                                                    'md': 2
+                                                    'md': 4
                                                 },
                                                 'content': [
                                                     {
                                                         'component': 'VSwitch',
                                                         'props': {
                                                             'model': 'deleteimages',
-                                                            'label': '删除旧镜像'
+                                                            'label': '清理镜像',
+                                                            'hint': '在下次执行时清理无tag且不在使用中的全部镜像'
                                                         }
                                                     }
                                                 ]
                                             },
-                                        ]
-                                    },
+                                    ]},
                                     {
                                         "component": "VRow",
                                         "content": [
@@ -583,7 +671,8 @@ class DockerCopilotHelper(_PluginBase):
                                                             'multiple': True,
                                                             'model': 'autoupdatelist',
                                                             'label': '自动更新容器',
-                                                            'items': auto_update_list
+                                                            'items': auto_update_list,
+                                                            'hint': '被选则的容器当有新版本时自动更新'
                                                         }
                                                     }
                                                 ]
@@ -636,7 +725,8 @@ class DockerCopilotHelper(_PluginBase):
                                         'component': 'VSwitch',
                                         'props': {
                                             'model': 'backupsnotify',
-                                            'label': '备份通知'
+                                            'label': '备份通知',
+                                            'hint': '备份成功发送通知'
                                         }
                                     }
                                 ]
@@ -653,6 +743,8 @@ class DockerCopilotHelper(_PluginBase):
             "schedulereport":False,
             "deleteimages": False,
             "backupsnotify": False,
+            "interval":10,
+            "intervallimit":6
 
         }
 
