@@ -19,7 +19,7 @@ from app.utils.http import RequestUtils
 
 class DockerCopilotHelper(_PluginBase):
     # 插件名称
-    plugin_name = "DC坚叔助手"
+    plugin_name = "DC助手"
     # 插件描述
     plugin_desc = "配合DockerCopilot,完成更新通知、自动更改、自动备份功能"
     # 插件图标
