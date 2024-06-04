@@ -4,7 +4,8 @@ from typing import Optional, Any, List, Dict, Tuple
 import time
 import pytz
 import jwt
-
+import requests
+from requests import Session, Response
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.core.event import eventmanager, Event
@@ -49,14 +50,14 @@ class DockerCopilotHelper(_PluginBase):
     _auto_update_list = []
     _auto_update_notify = False
     _delete_images = False
-    _intervallimit=6
-    _interval=10
+    _intervallimit= 6
+    _interval= 10
     # 备份
     _backup_cron = None
     _backups_notify = False
     _host = None
     _secretKey = None
- 
+    _headers: dict = None
     _scheduler: Optional[BackgroundScheduler] = None
 
     def init_plugin(self, config: dict = None):
@@ -80,7 +81,6 @@ class DockerCopilotHelper(_PluginBase):
             
             self._host = config.get("host")
             self._secretKey = config.get("secretKey")
-
 
             # 获取DC列表数据
             if not self._secretKey or not self._host:
@@ -149,13 +149,13 @@ class DockerCopilotHelper(_PluginBase):
     def get_state(self) -> bool:
         return self._enabled
     
-    def clear_checkbox(self):
-        self.update_config(
-            {
-                "autoupdatelist":[],
-                "updatablelist":[]  
-            }
-        )
+    # def clear_checkbox(self):
+    #         self.update_config(
+    #             {
+    #                 "autoupdatelist":[],
+    #                 "updatablelist":[]
+    #             }
+    #     )
 
     def __update_config(self):
         self.update_config(
@@ -193,7 +193,7 @@ class DockerCopilotHelper(_PluginBase):
             if self._delete_images:
                images_list = self.get_images_list()
                for images in images_list:
-                   if not images["images"] and  images["tag"]:
+                   if not images["inUsed"] and  images["tag"]:
                         self.remove_image(images["id"])
             # 自动更新
             for name in self._auto_update_list:
@@ -210,10 +210,11 @@ class DockerCopilotHelper(_PluginBase):
                                 title="【DC助手-自动更新】",
                                 text=f"【{name}】\n容器更新任务创建成功")
                            if self._schedule_report:
-                               url= '%s/api/progress/%s' % (data["data"]["taskID"])
-                               rescanres = (RequestUtils(headers={"Authorization": jwt})
-                                    .get_res(url))
-                               while iteration < self._intervallimit:
+                               iteration= 0
+                               while iteration < int(self._intervallimit):
+                                            url= '%s/api/progress/%s' % (self._host,data["data"]["taskID"])
+                                            rescanres = (RequestUtils(headers={"Authorization": jwt})
+                                                        .get_res(url))
                                             report_json = rescanres.json()
                                             if report_json["code"] == 200:                                           
                                                 self.post_message(
@@ -226,7 +227,9 @@ class DockerCopilotHelper(_PluginBase):
                                             else:
                                                 pass
                                             iteration += 1
-                                            time.sleep(self._interval)  # 暂停N秒后继续下一次请求
+                                            if iteration >= int(self._intervallimit):
+                                                logger.info(f'DC助手-更新进度追踪--{name}-超时')
+                                            time.sleep(int(self._interval))  # 暂停N秒后继续下一次请求
     
     def updatable(self):
         """
@@ -337,9 +340,11 @@ class DockerCopilotHelper(_PluginBase):
         """
         清理镜像
         """
-        images_url = "%s/api/images/%s?force=false" % (self._host,sha)
-        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
-                        .get_res(images_url))
+        images_url = "%s/api/image/%s?force=false" % (self._host,sha)
+        logger.info(f'images_url---{images_url}')
+        self._headers={"Authorization": self.get_jwt()}
+        result = self.delete_res(images_url)
+        logger.info(f'result---{result}')
         data = result.json()
         if data["code"] == 200:
             logger.error(f"DC-清理镜像成功: {sha}")
@@ -356,9 +361,15 @@ class DockerCopilotHelper(_PluginBase):
         """
         updatable_list = []
         auto_update_list = []
+        
+       
         if self._secretKey and self._host:
-            #jwt = self.get_auth()
             data=self.get_docker_list()
+            # 移除不存在的选项
+            names = [item['name'] for item in data]
+            self._updatable_list = [item for item in self._updatable_list if item in names]
+            self._auto_update_list = [item for item in self._auto_update_list if item in names]
+            self.__update_config()
             for item in data:
                 updatable_list.append({"title": item["name"], "value": item["name"]})
                 auto_update_list.append({"title": item["name"], "value": item["name"]})
@@ -763,3 +774,25 @@ class DockerCopilotHelper(_PluginBase):
                 self._scheduler = None
         except Exception as e:
             logger.error("退出插件失败：%s" % str(e))
+
+    def delete_res(self, url: str,
+            params: dict = None,
+            data: Any = None,
+            json: dict = None,
+            allow_redirects: bool = True,
+            raise_exception: bool = False
+            ) -> Optional[Response]:
+        try:
+            return requests.delete(url,
+                                    params=params,
+                                    data=data,
+                                    json=json,
+                                    verify=False,
+                                    headers=self._headers,
+                                    timeout=20,
+                                    allow_redirects=allow_redirects,
+                                    stream=False)
+        except requests.exceptions.RequestException:
+            if raise_exception:
+                raise requests.exceptions.RequestException
+            return None
