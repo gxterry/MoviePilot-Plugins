@@ -199,7 +199,7 @@ class DockerCopilotHelper(_PluginBase):
             for name in self._auto_update_list:
                 for container in containers:
                     if container["name"] == name and container["haveUpdate"]:
-                        if container["usingImage"] or container["usingImage"].startswith("sha256:"):
+                        if not container["usingImage"] or container["usingImage"].startswith("sha256:"):
                             self.post_message(
                                 mtype=NotificationType.Plugin,
                                 title="【DC助手-自动更新】",
