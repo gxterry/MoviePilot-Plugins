@@ -523,7 +523,7 @@ class DockerCopilotHelper(_PluginBase):
                                                             'props': {
                                                                 'model': 'updatecron',
                                                                 'label': '更新通知周期',
-                                                                'placeholder': '0 6 0 ? *'
+                                                                'placeholder': '15 8-23/2 * * *'
                                                             }
                                                         }
                                                     ]
@@ -580,7 +580,7 @@ class DockerCopilotHelper(_PluginBase):
                                                                 'props': {
                                                                     'model': 'autoupdatecron',
                                                                     'label': '自动更新周期',
-                                                                    'placeholder': '0 7 0 ? *'
+                                                                    'placeholder': '15 2 * * *'
                                                                 }
                                                             }
                                                         ]
@@ -731,7 +731,7 @@ class DockerCopilotHelper(_PluginBase):
                                                 'props': {
                                                     'model': 'backupcron',
                                                     'label': '自动备份',
-                                                    'placeholder': '0 6 0 ? *'
+                                                    'placeholder': '0 7 * * *'
                                                 }
                                             }
                                         ]
