@@ -14,7 +14,7 @@ PLUGIN_MARKET 添加： https://github.com/gxterry/MoviePilot-Plugins
 > 
 >修改随缘，需求随缘
 
-### 插件新增
+### 插件列表
 
 - 刷新极影视 
 
