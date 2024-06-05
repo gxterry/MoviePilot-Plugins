@@ -25,7 +25,7 @@ class ZspaceMediaFresh(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png"
     # 插件版本
-    plugin_version = "1.3"
+    plugin_version = "1.4"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -52,6 +52,7 @@ class ZspaceMediaFresh(_PluginBase):
     _startswith = None
     _notify = False
     _notifyaggregation = False
+    _unit=None
     _EMBY_HOST = settings.EMBY_HOST
     _EMBY_APIKEY = settings.EMBY_API_KEY
     _scheduler: Optional[BackgroundScheduler] = None
@@ -65,7 +66,7 @@ class ZspaceMediaFresh(_PluginBase):
             self._onlyonce = config.get("onlyonce")
             self._cron = config.get("cron")
             self._days = config.get("days") or 1
-            self._timescope = config.get("timescope") or 24
+            self._timescope = config.get("timescope") or 1440
             self._waittime = config.get("waittime") or 60
             self._zspcookie=config.get("zspcookie")
             self._zsphost=config.get("zsphost")
@@ -75,10 +76,12 @@ class ZspaceMediaFresh(_PluginBase):
             self._startswith=config.get("startswith")
             self._notify = config.get("notify")
             self._notifyaggregation =config.get("notifyaggregation")
-
+            self._unit =config.get("unit") or "day"
             if self._zsphost:           
                 if not self._zsphost.startswith("http"):
                     self._zsphost = "http://" + self._zsphost
+                if  self._zsphost.endswith("/"):
+                    self._zsphost = self._zsphost[:-1]
             # 加载模块
             if self._enabled or self._onlyonce:
                 # 定时服务
@@ -129,7 +132,8 @@ class ZspaceMediaFresh(_PluginBase):
                 "flushall": self._flushall,
                 "startswith":self._startswith,
                 "notify": self._notify,
-                "notifyaggregation":self._notifyaggregation
+                "notifyaggregation":self._notifyaggregation,
+                "unit":self._unit
             }
         )
 
@@ -145,15 +149,23 @@ class ZspaceMediaFresh(_PluginBase):
                 return           
             #获取days内入库的媒体
             current_date = datetime.now()
-            target_date = current_date - timedelta(hours=int(self._timescope))       
+            if self._unit =="day":
+                target_date = current_date - timedelta(days=int(self._timescope)) 
+            elif  self._unit =="hour":    
+                target_date = current_date - timedelta(hours=int(self._timescope)) 
+            elif  self._unit =="minute":
+                target_date = current_date - timedelta(minutes=int(self._timescope)) 
+            else:
+                 logger.info(f"时间范围单位未设置")
+                 return
             transferhistorys = TransferHistoryOper().list_by_date(target_date.strftime('%Y-%m-%d %H:%M:%S'))
             if not transferhistorys:
-                logger.info(f"{self._timescope} 小时内没有媒体库入库记录")
+                logger.info(f"{self._timescope} {self._unit}内没有媒体库入库记录")
                 return
             #匹配指定路径的入库数据
             filtered_transferhistorys = [th for th in transferhistorys if th.dest.startswith(self._startswith) and th.status == 1]
             if  not filtered_transferhistorys :
-                logger.info(f"{self._timescope} 小时内没有网盘媒体库的记录")
+                logger.info(f"{self._timescope} {self._unit}内没有网盘媒体库的记录")
                 return
             # 提取顶级分类  电影或电视剧
             unique_types = set([th.type for th in filtered_transferhistorys])
@@ -165,7 +177,7 @@ class ZspaceMediaFresh(_PluginBase):
             else:
                 tvlib_list = []
             classify_list = moivelib_list + tvlib_list
-            logger.info(f"开始刷新极影视，最近{self._timescope}小时内网盘入库媒体：{len(filtered_transferhistorys)}个,需刷新媒体库：{classify_list}")
+            logger.info(f"开始刷新极影视，最近{self._timescope} {self._unit}内网盘入库媒体：{len(filtered_transferhistorys)}个,需刷新媒体库：{classify_list}")
         # 刷新极影视
         self.__refresh_zspmedia(classify_list)
         logger.info(f"刷新极影视完成")
@@ -405,25 +417,46 @@ class ZspaceMediaFresh(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 4
+                                    'md': 3
                                 },
                                 'content': [
                                     {
                                         'component': 'VTextField',
                                         'props': {
                                             'model': 'timescope',
-                                            'label': '时间范围(小时)',
-                                            'placeholder': '24',
+                                            'label': '时间范围',
+                                            'placeholder': '1',
                                             'hint': '指定之内有网盘资源入库才刷新'
                                         }
                                     }
                                 ]
                             },
                             {
+
+                                "component": "VCol",
+                                "props": {"cols": 12,'md': 2},
+                                "content": [
+                                    {
+                                        "component": "VSelect",
+                                        "props": {
+                                            "chips": True,
+                                            "multiple": False,
+                                            "model": "unit",
+                                            "label": "单位",
+                                            "items": [{"title": "天", "value": "day"},
+                                                        {"title": "小时", "value": "hour"},
+                                                        {"title": "分钟", "value": "minute"}
+                                                        ],
+                                            'hint': '时间控制单位'
+                                        },
+                                    }
+                                ],
+                            },
+                            {
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 4
+                                    'md': 3
                                 },
                                 'content': [
                                     {
@@ -569,8 +602,9 @@ class ZspaceMediaFresh(_PluginBase):
             "enabled": False,
             "onlyonce": False,
             "cron": "5 1 * * *",
-            "timescope": 24,
-            "waittime":60
+            "timescope": 1,
+            "waittime":60,
+            "unit":"day"
         }
 
     def get_page(self) -> List[dict]:
