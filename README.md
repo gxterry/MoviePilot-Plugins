@@ -32,6 +32,7 @@ PLUGIN_MARKET 添加： https://github.com/gxterry/MoviePilot-Plugins
 - DC助手
 
     v1.1  通知、自动更新、自动备份、镜像清除功能
+    
 > 配合唯依大佬 dockerCopilot项目 https://github.com/onlyLTY/dockerCopilotZspace (注意系统版本)
 > 
 > 实现更新通知、自动更新、自动备份功能
