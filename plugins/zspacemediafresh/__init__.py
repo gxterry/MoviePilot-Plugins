@@ -25,7 +25,7 @@ class ZspaceMediaFresh(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png"
     # 插件版本
-    plugin_version = "1.2"
+    plugin_version = "1.3"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -42,6 +42,7 @@ class ZspaceMediaFresh(_PluginBase):
     _onlyonce = False
     _cron = None
     _days = None
+    _timescope =None 
     _waittime = None
     _zspcookie=None
     _zsphost=None
@@ -63,7 +64,8 @@ class ZspaceMediaFresh(_PluginBase):
             self._enabled = config.get("enabled")
             self._onlyonce = config.get("onlyonce")
             self._cron = config.get("cron")
-            self._days = config.get("days") or 5
+            self._days = config.get("days") or 1
+            self._timescope = config.get("timescope") or 24
             self._waittime = config.get("waittime") or 60
             self._zspcookie=config.get("zspcookie")
             self._zsphost=config.get("zsphost")
@@ -118,6 +120,7 @@ class ZspaceMediaFresh(_PluginBase):
                 "cron": self._cron,
                 "enabled": self._enabled,
                 "days": self._days,
+                "timescope":self._timescope,
                 "waittime": self._waittime,
                 "zspcookie": self._zspcookie,
                 "zsphost": self._zsphost,
@@ -139,19 +142,18 @@ class ZspaceMediaFresh(_PluginBase):
             # 参数验证
             if not self._startswith:
                 logger.error(f"网盘媒体库路径未设置")
-                return
-            logger.info(f"网盘媒体库路径：{self._startswith}")
+                return           
             #获取days内入库的媒体
             current_date = datetime.now()
-            target_date = current_date - timedelta(days=int(self._days))
-            transferhistorys = TransferHistoryOper().list_by_date(target_date.strftime('%Y-%m-%d'))
+            target_date = current_date - timedelta(hours=int(self._timescope))       
+            transferhistorys = TransferHistoryOper().list_by_date(target_date.strftime('%Y-%m-%d %H:%M:%S'))
             if not transferhistorys:
-                logger.error(f"{self._days} 天内没有媒体库入库记录-")
+                logger.info(f"{self._timescope} 小时内没有媒体库入库记录")
                 return
             #匹配指定路径的入库数据
-            filtered_transferhistorys = [th for th in transferhistorys if th.dest.startswith(self._startswith)]
+            filtered_transferhistorys = [th for th in transferhistorys if th.dest.startswith(self._startswith) and th.status == 1]
             if  not filtered_transferhistorys :
-                logger.error(f"{self._days} 天内没有网盘媒体库的记录")
+                logger.info(f"{self._timescope} 小时内没有网盘媒体库的记录")
                 return
             # 提取顶级分类  电影或电视剧
             unique_types = set([th.type for th in filtered_transferhistorys])
@@ -163,7 +165,7 @@ class ZspaceMediaFresh(_PluginBase):
             else:
                 tvlib_list = []
             classify_list = moivelib_list + tvlib_list
-            logger.info(f"开始刷新极影视，最近{self._days}天内网盘入库媒体：{len(filtered_transferhistorys)}个,需刷新媒体库：{classify_list}")
+            logger.info(f"开始刷新极影视，最近{self._timescope}小时内网盘入库媒体：{len(filtered_transferhistorys)}个,需刷新媒体库：{classify_list}")
         # 刷新极影视
         self.__refresh_zspmedia(classify_list)
         logger.info(f"刷新极影视完成")
@@ -199,64 +201,64 @@ class ZspaceMediaFresh(_PluginBase):
         # 获取分类列表
         list_url = "%s/zvideo/classification/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string() )
         try:
-            with RequestUtils(cookies=self._zspcookie).post_res(list_url) as rsp_body:
-                    res = rsp_body.json()
-                    logger.debug(f"获取极影视分类 ：{res}")
-                    if res and res["code"] == "200":
-                        if res["data"] and isinstance(res["data"], list):
-                            # 获取分类ID
-                            name_id_dict = {item["name"]: item["id"] for item in res['data']}
-                            # 是否全类型刷新
-                            if self._flushall :
-                                 classify_list = [item["name"] for item in res['data']]
-                            for classify in classify_list:
-                                if classify not in name_id_dict:
-                                    logger.info(f"分类 {classify} 不存在于极影视分类列表中，跳过刷新")
-                                    continue
-                                # 提交刷新请求
-                                rescan_url = "%s/zvideo/classification/rescan?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string())
-                                formdata = {"classification_id": name_id_dict[classify],"device_id":device_id,"token":token,"device":"PC电脑","plat":"web"}
-                                rescanres = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},cookies=self._zspcookie).post_res(rescan_url,formdata)
-                                rescanres_json = rescanres.json()
-                                logger.debug(f"提交刷新请求--rescanres_json：{rescanres_json}")
-                                start_time = time.time()# 记录开始时间
-                                if rescanres_json["code"] =="200" and rescanres_json["data"]["task_id"]:
-                                    logger.info(f"分类：{classify}开始刷新，任务ID：{rescanres_json['data']['task_id']}")
-                                    # 查询刷新结果
-                                    result_url = "%s/zvideo/classification/rescan/result?&rnd=%s&webagent=v2" % (self._zsphost,self.generate_string())
-                                    formdata["task_id"] = rescanres_json['data']['task_id']
-                                    logger.debug(f"返回数据-----》：{formdata}")
-                                    while True:
-                                        #轮询状态
-                                        resultRep = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},
-                                                                cookies=self._zspcookie).post_res(result_url, formdata)
-                                        result_json = resultRep.json()
-                                        if result_json and result_json["code"] in ["200","N120024"] and result_json["data"]["task_status"] == 4:
-                                            logger.info(f"分类：{classify} 刷新执行中,等待{self._waittime}秒，task_id：{rescanres_json['data']['task_id']}")
-                                            time.sleep(int(self._waittime))  #任务状态进行中 等待
-                                        else:
-                                            logger.info(f"分类：{classify} 刷新任务执行结束,task_id：{rescanres_json['data']['task_id']}，task_status:{result_json['data']['task_status']}")
-                                            end_time = time.time()  # 记录结束时间
-                                            msgtext =f"分类：{classify} 刷新成功\n"+f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n"+f"用时： {int(end_time - start_time)} 秒\n"
-                                            if not self._notifyaggregation and self._notify:
-                                                self.post_message(
-                                                    mtype=NotificationType.Plugin,
-                                                    title="【刷新极影视】",
-                                                    text= msgtext)
-                                            elif self._notifyaggregation and self._notify :
-                                               total_msgtext += msgtext
-                                            break
+            rsp_body=RequestUtils(cookies=self._zspcookie).post_res(list_url)
+            res = rsp_body.json()
+            logger.debug(f"获取极影视分类 ：{res}")
+            if res and res["code"] == "200":
+                if res["data"] and isinstance(res["data"], list):
+                    # 获取分类ID
+                    name_id_dict = {item["name"]: item["id"] for item in res['data']}
+                    # 是否全类型刷新
+                    if self._flushall :
+                            classify_list = [item["name"] for item in res['data']]
+                    for classify in classify_list:
+                        if classify not in name_id_dict:
+                            logger.info(f"分类 {classify} 不存在于极影视分类列表中，跳过刷新")
+                            continue
+                        # 提交刷新请求
+                        rescan_url = "%s/zvideo/classification/rescan?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string())
+                        formdata = {"classification_id": name_id_dict[classify],"device_id":device_id,"token":token,"device":"PC电脑","plat":"web"}
+                        rescanres = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},cookies=self._zspcookie).post_res(rescan_url,formdata)
+                        rescanres_json = rescanres.json()
+                        logger.debug(f"提交刷新请求--rescanres_json：{rescanres_json}")
+                        start_time = time.time()# 记录开始时间
+                        if rescanres_json["code"] =="200" and rescanres_json["data"]["task_id"]:
+                            logger.info(f"分类：{classify}开始刷新，任务ID：{rescanres_json['data']['task_id']}")
+                            # 查询刷新结果
+                            result_url = "%s/zvideo/classification/rescan/result?&rnd=%s&webagent=v2" % (self._zsphost,self.generate_string())
+                            formdata["task_id"] = rescanres_json['data']['task_id']
+                            logger.debug(f"返回数据-----》：{formdata}")
+                            while True:
+                                #轮询状态
+                                resultRep = RequestUtils(headers={"Content-Type": "application/x-www-form-urlencoded"},
+                                                        cookies=self._zspcookie).post_res(result_url, formdata)
+                                result_json = resultRep.json()
+                                if result_json and result_json["code"] in ["200","N120024"] and result_json["data"]["task_status"] == 4:
+                                    logger.info(f"分类：{classify} 刷新执行中,等待{self._waittime}秒，task_id：{rescanres_json['data']['task_id']}")
+                                    time.sleep(int(self._waittime))  #任务状态进行中 等待
                                 else:
-                                    logger.info(f"极影视获取分类列表出错：{rescanres_json}")
-                            if  self._notifyaggregation and self._notify:
-                                self.post_message(
-                                        mtype=NotificationType.Plugin,
-                                        title="【刷新极影视】",
-                                        text=total_msgtext)
-                    else:
-                        logger.info(f"极影视获取分类列表出错：{res}")
+                                    logger.info(f"分类：{classify} 刷新任务执行结束,task_id：{rescanres_json['data']['task_id']}，task_status:{result_json['data']['task_status']}")
+                                    end_time = time.time()  # 记录结束时间
+                                    msgtext =f"分类：{classify} 刷新成功\n"+f"开始时间： {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n"+f"用时： {int(end_time - start_time)} 秒\n"
+                                    if not self._notifyaggregation and self._notify:
+                                        self.post_message(
+                                            mtype=NotificationType.Plugin,
+                                            title="【刷新极影视】",
+                                            text= msgtext)
+                                    elif self._notifyaggregation and self._notify :
+                                        total_msgtext += msgtext
+                                    break
+                        else:
+                            logger.info(f"极影视获取分类列表出错：{rescanres_json}")
+                    if  self._notifyaggregation and self._notify:
+                        self.post_message(
+                                mtype=NotificationType.Plugin,
+                                title="【刷新极影视】",
+                                text=total_msgtext)
+            else:
+                logger.info(f"极影视获取分类列表出错：{res}")
         except Exception as e:
-            logger.error(f"极影视获取分类列表出错：" + str(e))
+            logger.error(f"极影视刷新出错：" + str(e))
             return False
         return False
 
@@ -394,7 +396,7 @@ class ZspaceMediaFresh(_PluginBase):
                                         'props': {
                                             'model': 'cron',
                                             'label': '执行周期',
-                                            'placeholder': '5位cron表达式，留空自动'
+                                            'placeholder': '5位cron表达式，留空不运行'
                                         }
                                     }
                                 ]
@@ -409,9 +411,10 @@ class ZspaceMediaFresh(_PluginBase):
                                     {
                                         'component': 'VTextField',
                                         'props': {
-                                            'model': 'days',
-                                            'label': '时间范围(天)',
-                                            'placeholder': '2'
+                                            'model': 'timescope',
+                                            'label': '时间范围(小时)',
+                                            'placeholder': '24',
+                                            'hint': '指定之内有网盘资源入库才刷新'
                                         }
                                     }
                                 ]
@@ -428,7 +431,8 @@ class ZspaceMediaFresh(_PluginBase):
                                         'props': {
                                             'model': 'waittime',
                                             'label': '等待时间(秒)',
-                                            'placeholder': '60'
+                                            'placeholder': '60',
+                                            'hint': '获取刷新状态的频率'
                                         }
                                     }
                                 ]
@@ -487,7 +491,8 @@ class ZspaceMediaFresh(_PluginBase):
                                             'model': 'moivelib',
                                             'label': '电影分类名',
                                             'placeholder': '多个逗号分割',
-                                            'rows': 6
+                                            'rows': 6,
+                                            'hint': '包含电影的极影视分类名，多个逗号分割'
                                         }
                                     }                                  
                                 ]
@@ -505,7 +510,8 @@ class ZspaceMediaFresh(_PluginBase):
                                             'model': 'tvlib',
                                             'label': '电视剧分类名',
                                             'placeholder': '多个逗号分割',
-                                            'rows': 6
+                                            'rows': 6,
+                                            'hint': '包含电视剧、综艺、纪录片、动漫的极影视分类名，多个逗号分割'
                                         }
                                     }
                                 ]
@@ -563,7 +569,7 @@ class ZspaceMediaFresh(_PluginBase):
             "enabled": False,
             "onlyonce": False,
             "cron": "5 1 * * *",
-            "days": 1,
+            "timescope": 24,
             "waittime":60
         }
 
