@@ -101,7 +101,7 @@ class ZspaceSysMsg(_PluginBase):
             }
         )
 
-    def pushmsg(self,classify_list):
+    def pushmsg(self):
         """
         极空间系统通知推送
         """
@@ -124,7 +124,7 @@ class ZspaceSysMsg(_PluginBase):
                         self.post_message(
                             mtype=NotificationType.Plugin,
                             title="【极空间系统消息】",
-                            text= f"内容:{message.content} \n 时间:{message.created_at}")                        
+                            text= f"内容:{message['content']} \n 时间:{message['created_at']}")                        
             else:
                 logger.info(f"获取极空间系统消息{res}")
         except Exception as e:
@@ -218,11 +218,7 @@ class ZspaceSysMsg(_PluginBase):
                                     }
                                 ]
                             }
-                        ],
-                    },{
-                        "component": "VRow",
-                        "content": [          
-                            {
+                            ,{
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
@@ -236,11 +232,17 @@ class ZspaceSysMsg(_PluginBase):
                                             'label': '极空间webip+端口',
                                             'placeholder': 'http://127.0.0.1:5055'
                                         }
-                                    },
-                                    {
+                                    }               
+                                ]
+                            },
+                        ],
+                    },{
+                        "component": "VRow",
+                        "content": [  
+                            {
                                         'component': 'VCol',
                                         'props': {
-                                            'cols': 12
+                                            'cols': 12\
                                         },
                                         'content': [
                                             {
@@ -253,8 +255,6 @@ class ZspaceSysMsg(_PluginBase):
                                             }
                                         ]
                                     }
-                                ]
-                            }
                         ],
                     },
                     {
