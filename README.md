@@ -40,7 +40,7 @@ PLUGIN_MARKET 添加： https://github.com/gxterry/MoviePilot-Plugins
 
 - 极空间系统通知
 
-    v0.1  开发中-----
+    v1.0  读取极空间未读的系统消息，推送到MP消息渠道
 
 > 实现将极空间的系统消息,推送到MP选定的消息渠道
 

@@ -2,14 +2,12 @@ from datetime import datetime, timedelta
 from typing import Optional, Any, List, Dict, Tuple
 
 import pytz
-import re
 import random
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from app.core.event import eventmanager, Event
-from app.db.transferhistory_oper import TransferHistoryOper
 from app.core.config import settings
 from app.log import logger
 from app.plugins import _PluginBase
@@ -21,11 +19,11 @@ class ZspaceSysMsg(_PluginBase):
     # 插件名称
     plugin_name = "极空间系统通知"
     # 插件描述
-    plugin_desc = "获取极空间系统消息,推送到MP的消息渠道"
+    plugin_desc = "将极空间系统消息推送到MP的消息渠道"
     # 插件图标
     plugin_icon = "Zspace_A.png"
     # 插件版本
-    plugin_version = "0.1"
+    plugin_version = "1.0"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -41,8 +39,8 @@ class ZspaceSysMsg(_PluginBase):
     _enabled = False
     _onlyonce = False
     _cron = None
-    _zspcookie=None
-    _zsphost=None
+    _zspcookie = None
+    _zsphost = None
     _scheduler: Optional[BackgroundScheduler] = None
 
     def init_plugin(self, config: dict = None):
@@ -51,13 +49,13 @@ class ZspaceSysMsg(_PluginBase):
         if config:
             self._enabled = config.get("enabled")
             self._onlyonce = config.get("onlyonce")
-            self._cron = config.get("cron")      
-            self._zspcookie=config.get("zspcookie")
-            self._zsphost=config.get("zsphost")        
-            if self._zsphost:           
+            self._cron = config.get("cron")
+            self._zspcookie = config.get("zspcookie")
+            self._zsphost = config.get("zsphost")
+            if self._zsphost:
                 if not self._zsphost.startswith("http"):
                     self._zsphost = "http://" + self._zsphost
-                if  self._zsphost.endswith("/"):
+                if self._zsphost.endswith("/"):
                     self._zsphost = self._zsphost[:-1]
             # 加载模块
             if self._enabled or self._onlyonce:
@@ -89,15 +87,14 @@ class ZspaceSysMsg(_PluginBase):
                     self._scheduler.print_jobs()
                     self._scheduler.start()
 
-  
     def __update_config(self):
         self.update_config(
             {
                 "onlyonce": self._onlyonce,
                 "cron": self._cron,
-                "enabled": self._enabled,    
+                "enabled": self._enabled,
                 "zspcookie": self._zspcookie,
-                "zsphost": self._zsphost            
+                "zsphost": self._zsphost
             }
         )
 
@@ -109,22 +106,28 @@ class ZspaceSysMsg(_PluginBase):
             return False
         cookie = RequestUtils.cookie_parse(self._zspcookie)
         token = cookie['token']
-        #device_id = cookie['device_id']  
-        # 只获取notify类型消息 
-        formdata = {"type":  "notify","start_id":0,"num":"20","token":token}
+        # device_id = cookie['device_id']
+        # 只获取notify类型消息
+        formdata = {"type": "notify", "start_id": 0, "num": "5", "token": token}
         # 获取消息列表
-        list_url = "%s/action/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string() )
+        list_url = "%s/action/list?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string())
         try:
-            rsp_body=RequestUtils(cookies=self._zspcookie).post_res(list_url,formdata)
+            rsp_body = RequestUtils(cookies=self._zspcookie).post_res(list_url, formdata)
             res = rsp_body.json()
             logger.debug(f"获取极空间系统消息 ：{res}")
             if res and res["code"] == "200":
-                if res["data"]["list"] and isinstance(res["data"]["list"], list):     
-                    for message in res["data"]["list"]:     
-                        self.post_message(
-                            mtype=NotificationType.Plugin,
-                            title="【极空间系统消息】",
-                            text= f"内容:{message['content']} \n 时间:{message['created_at']}")                        
+                if res["data"]["list"] and isinstance(res["data"]["list"], list):
+                    for message in res["data"]["list"]:
+                        if message['is_new'] == 1:
+                            self.post_message(
+                                mtype=NotificationType.Plugin,
+                                title=f"【极空间系统消息】",
+                                text=f"{message['title']}\n内容:{message['content']} \n 时间:{message['created_at']}")
+                            #设置已读
+                            list_url = "%s/action/known?&rnd=%s&webagent=v2" % (self._zsphost, self.generate_string())
+                            form = {"ids": message["id"], "type": "notify", "start_id": 0, "num": "20", "token": token}
+                            RequestUtils(cookies=self._zspcookie).post_res(list_url, form)
+
             else:
                 logger.info(f"获取极空间系统消息{res}")
         except Exception as e:
@@ -135,7 +138,7 @@ class ZspaceSysMsg(_PluginBase):
     @staticmethod
     def generate_string():
         timestamp = str(time.time())  # 获取当前的时间戳
-        four_digit_random = str(random.randint(1000,9999))  # 生成四位的随机数
+        four_digit_random = str(random.randint(1000, 9999))  # 生成四位的随机数
         return f"{timestamp}_{four_digit_random}"  # 返回格式化后的字符串
 
     def get_state(self) -> bool:
@@ -144,7 +147,6 @@ class ZspaceSysMsg(_PluginBase):
     @eventmanager.register(EventType.PluginAction)
     def remote_sync(self, event: Event):
         pass
-
 
     @staticmethod
     def get_command() -> List[Dict[str, Any]]:
@@ -218,7 +220,7 @@ class ZspaceSysMsg(_PluginBase):
                                     }
                                 ]
                             }
-                            ,{
+                            , {
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
@@ -232,29 +234,29 @@ class ZspaceSysMsg(_PluginBase):
                                             'label': '极空间webip+端口',
                                             'placeholder': 'http://127.0.0.1:5055'
                                         }
-                                    }               
+                                    }
                                 ]
                             },
                         ],
-                    },{
+                    }, {
                         "component": "VRow",
-                        "content": [  
+                        "content": [
                             {
-                                        'component': 'VCol',
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12 \
+                                    },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
                                         'props': {
-                                            'cols': 12\
-                                        },
-                                        'content': [
-                                            {
-                                                'component': 'VTextField',
-                                                'props': {
-                                                    'model': 'zspcookie',
-                                                    'label': 'cookie',
-                                                    'rows': 5
-                                                }
-                                            }
-                                        ]
+                                            'model': 'zspcookie',
+                                            'label': 'cookie',
+                                            'rows': 5
+                                        }
                                     }
+                                ]
+                            }
                         ],
                     },
                     {
@@ -283,11 +285,7 @@ class ZspaceSysMsg(_PluginBase):
             }
         ], {
             "enabled": False,
-            "onlyonce": False,
-            "cron": "5 1 * * *",
-            "timescope": 1,
-            "waittime":60,
-            "unit":"day"
+            "onlyonce": False
         }
 
     def get_page(self) -> List[dict]:

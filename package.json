@@ -19,9 +19,9 @@
     },
     "ZspaceSysMsg": {
         "name": "极空间系统通知",
-        "description": "获取极空间系统消息,推送到MP的消息渠道",
+        "description": "将极空间系统消息推送到MP的消息渠道",
         "labels": "极空间",
-        "version": "0.1",
+        "version": "1.0",
         "icon": "Zspace_A.png",
         "author": "gxterry",
         "level": 1
