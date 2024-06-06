@@ -10,10 +10,19 @@
     },
     "DockerCopilotHelper": {
         "name": "DC助手",
-        "description": "配合DockerCopilot,完成更新通知、自动更改、自动备份功能",
+        "description": "配合DockerCopilot,完成更新通知、自动更新、自动备份功能",
         "labels": "Docker",
         "version": "1.1",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png",
+        "author": "gxterry",
+        "level": 1
+    },
+    "ZspaceSysMsg": {
+        "name": "极空间系统通知",
+        "description": "获取极空间系统消息,推送到MP的消息渠道",
+        "labels": "极空间",
+        "version": "0.1",
+        "icon": "Zspace_A.png",
         "author": "gxterry",
         "level": 1
     }
