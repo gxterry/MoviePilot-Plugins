@@ -25,7 +25,7 @@ class ZspaceMediaFresh(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png"
     # 插件版本
-    plugin_version = "1.5"
+    plugin_version = "1.5.1"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -163,7 +163,7 @@ class ZspaceMediaFresh(_PluginBase):
                 logger.info(f"{self._timescope} {self._unit}内没有媒体库入库记录")
                 return
             #匹配指定路径的入库数据
-            filtered_transferhistorys = [th for th in transferhistorys if th.dest.startswith(self._startswith) and th.status == 1]
+            filtered_transferhistorys = [th for th in transferhistorys if th.status == 1 and th.dest is not None and th.dest.startswith(self._startswith) ]
             if  not filtered_transferhistorys :
                 logger.info(f"{self._timescope} {self._unit}内没有网盘媒体库的记录")
                 return
