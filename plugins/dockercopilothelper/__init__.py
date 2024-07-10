@@ -25,7 +25,7 @@ class DockerCopilotHelper(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png"
     # 插件版本
-    plugin_version = "1.1"
+    plugin_version = "1.1.1"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -377,7 +377,7 @@ class DockerCopilotHelper(_PluginBase):
             names = [item['name'] for item in data]
             if self._updatable_list:
                 self._updatable_list = [item for item in self._updatable_list if item in names]
-            if self._updatable_list:
+            if self._auto_update_list:
                 self._auto_update_list = [item for item in self._auto_update_list if item in names]
             if self._auto_update_list or self._updatable_list:
                 self.__update_config()
