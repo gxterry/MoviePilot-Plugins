@@ -25,7 +25,7 @@ class DockerCopilotHelper(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png"
     # 插件版本
-    plugin_version = "1.1.1"
+    plugin_version = "1.1.2"
     # 插件作者
     plugin_author = "gxterry"
     # 作者主页
@@ -266,25 +266,29 @@ class DockerCopilotHelper(_PluginBase):
         """
         备份
         """
-        logger.info(f"DC-备份-准备执行")
-        backup_url = '%s/api/container/backup' % (self._host)
-        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
-                  .get_res(backup_url))
-        data = result.json()
-        if data["code"] == 200:
-            if self._backups_notify:
-                self.post_message(
-                    mtype=NotificationType.Plugin,
-                    title="【DC助手-备份成功】",
-                    text=f"镜像备份成功！")
-            logger.info(f"DC-备份完成")
-        else:
-            if self._backups_notify:
-                self.post_message(
-                    mtype=NotificationType.Plugin,
-                    title="【DC助手-备份失败】",
-                    text=f"镜像备份失败拉~！\n【失败原因】:{data['msg']}")
-            logger.error(f"DC-备份失败 Error code: {data['code']}, message: {data['msg']}")
+        try:
+            logger.info(f"DC-备份-准备执行")
+            backup_url = '%s/api/container/backup' % (self._host)
+            result = (RequestUtils(headers={"Authorization": self.get_jwt()})
+                      .get_res(backup_url))
+            data = result.json()
+            if data["code"] == 200:
+                if self._backups_notify:
+                    self.post_message(
+                        mtype=NotificationType.Plugin,
+                        title="【DC助手-备份成功】",
+                        text=f"镜像备份成功！")
+                logger.info(f"DC-备份完成")
+            else:
+                if self._backups_notify:
+                    self.post_message(
+                        mtype=NotificationType.Plugin,
+                        title="【DC助手-备份失败】",
+                        text=f"镜像备份失败拉~！\n【失败原因】:{data['msg']}")
+                logger.error(f"DC-备份失败 Error code: {data['code']}, message: {data['msg']}")
+        except Exception as e:
+            logger.error(f"DC-备份失败,网络异常,请检查DockerCopilot服务是否正常: {str(e)}")
+            return []
 
     @eventmanager.register(EventType.PluginAction)
     def remote_sync(self, event: Event):
@@ -326,43 +330,55 @@ class DockerCopilotHelper(_PluginBase):
         """
         容器列表
         """
-        docker_url = "%s/api/containers" % (self._host)
-        result = (RequestUtils(headers={"Authorization":self.get_jwt() })
-                  .get_res(docker_url))
-        data = result.json()
-        if data["code"] == 0:
-            return data["data"]
-        else:
-            logger.error(f"DC-获取容器列表异常 Error code: {data['code']}, message: {data['msg']}")
+        try:
+            docker_url = "%s/api/containers" % (self._host)
+            result = (RequestUtils(headers={"Authorization":self.get_jwt() })
+                      .get_res(docker_url))
+            data = result.json()
+            if data["code"] == 0:
+                return data["data"]
+            else:
+                logger.error(f"DC-获取容器列表异常 Error code: {data['code']}, message: {data['msg']}")
+                return []
+        except Exception as e:
+            logger.error(f"DC-请求容器列表时发生网络异常,请检查DockerCopilot服务是否正常: {str(e)}")
             return []
 
     def get_images_list(self) -> List[Dict[str, Any]]:
         """
         镜像列表
         """
-        images_url = "%s/api/images" % (self._host)
-        result = (RequestUtils(headers={"Authorization": self.get_jwt()})
-                  .get_res(images_url))
-        data = result.json()
-        if data["code"] == 200:
-            return data["data"]
-        else:
-            logger.error(f"DC-获取镜像列表异常 Error code: {data['code']}, message: {data['msg']}")
+        try:
+            images_url = "%s/api/images" % (self._host)
+            result = (RequestUtils(headers={"Authorization": self.get_jwt()})
+                      .get_res(images_url))
+            data = result.json()
+            if data["code"] == 200:
+                return data["data"]
+            else:
+                logger.error(f"DC-获取镜像列表异常 Error code: {data['code']}, message: {data['msg']}")
+                return []
+        except Exception as e:
+            logger.error(f"DC-请求镜像列表时发生网络异常,请检查DockerCopilot服务是否正常: {str(e)}")
             return []
 
     def remove_image(self, sha) -> bool:
         """
         清理镜像
         """
-        images_url = "%s/api/image/%s?force=false" % (self._host, sha)
-        result = self.delete_res(images_url,{"Authorization": self.get_jwt()})
-        logger.debug(f'result---{result}')
-        data = result.json()
-        if data["code"] == 200:
-            logger.error(f"DC-清理镜像成功: {sha}")
-            return True
-        else:
-            logger.error(f"DC-清理镜像异常 Error code: {data['code']}, message: {data['msg']}")
+        try:
+            images_url = "%s/api/image/%s?force=false" % (self._host, sha)
+            result = self.delete_res(images_url,{"Authorization": self.get_jwt()})
+            logger.debug(f'result---{result}')
+            data = result.json()
+            if data["code"] == 200:
+                logger.error(f"DC-清理镜像成功: {sha}")
+                return True
+            else:
+                logger.error(f"DC-清理镜像异常 Error code: {data['code']}, message: {data['msg']}")
+                return False
+        except Exception as e:
+            logger.error(f"DC-请求清理镜像时发生网络异常,请检查DockerCopilot服务是否正常: {str(e)}")
             return False
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:

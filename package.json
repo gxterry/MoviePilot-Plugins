@@ -15,11 +15,12 @@
         "name": "DC助手",
         "description": "配合DockerCopilot,完成更新通知、自动更新、自动备份功能",
         "labels": "Docker",
-        "version": "1.1.1",
+        "version": "1.1.2",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Docker_Copilot.png",
         "author": "gxterry",
         "level": 1,
         "history": {
+            "v1.1.2": "修复网络异常导致的数据无法加载问题",
             "v1.1.1": "修复面板加载异常"
         }
     },
