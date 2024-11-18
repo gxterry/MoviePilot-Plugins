@@ -34,7 +34,7 @@
         "level": 1
     },
     "TdownloadTorrent": {
-        "name": "添加种子下载（临时测试)",
+        "name": "添加种子下载",
         "description": "临时测试",
         "labels": "站点",
         "version": "1.1.1",

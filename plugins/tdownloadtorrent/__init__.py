@@ -10,7 +10,7 @@ from app.core.event import eventmanager
 from app.schemas.types import EventType,MessageChannel,NotificationType
 class TdownloadTorrent(_PluginBase):
     # 插件名称
-    plugin_name = "添加种子下载（临时测试)"
+    plugin_name = "添加种子下载"
     # 插件描述
     plugin_desc = "临时测试"
     # 插件图标
