@@ -66,12 +66,13 @@ class TdownloadTorrent(_PluginBase):
             })
 
     def process_torrent(self, torrent_url):
+        logger.error(f"参数----- {self._downloader } --{self._save_path}--{ self._mp_path}")
         msg = None
         # 获取种子对应站点cookie
         domain = StringUtils.get_url_domain(torrent_url)
         if not domain:
             logger.error(f"种子 {torrent_url} 获取站点域名失败，跳过处理")
-            msg=f"种子 {torrent_url} 获取站点域名失败，跳过处理"
+            msg = f"种子 {torrent_url} 获取站点域名失败，跳过处理"
             return msg
 
         # 查询站点
@@ -110,6 +111,7 @@ class TdownloadTorrent(_PluginBase):
         """
         远端交互种子连接
         """
+        logger.info(f"进入消息")
         msg = None
         if self._interaction:
             logger.error("插件未启用或未开启交互")
@@ -119,6 +121,7 @@ class TdownloadTorrent(_PluginBase):
         channel = data.get("channel")
         text = data.get("text")
         userid = data.get("userid")
+        logger.info(f"进入消息：{channel}--{text}")
         if channel and channel != MessageChannel.Wechat:
             logger.error("非微信渠道")
             return
@@ -126,7 +129,8 @@ class TdownloadTorrent(_PluginBase):
             logger.error("无需处理的消息")
             return
         text = text[2:]
-        msg=self.process_torrent(text)
+        logger.info(f"进入消息：2--{text}")
+        msg = self.process_torrent(text)
         self.post_message(
             mtype=NotificationType.Plugin,
             title="【添加种子下载】",
