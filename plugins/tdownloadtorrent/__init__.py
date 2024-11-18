@@ -30,6 +30,7 @@ class TdownloadTorrent(_PluginBase):
 
     # 私有属性
     _downloader = None
+    _enabled = False
     _is_paused = False
     _interaction = False
     _save_path = None
@@ -46,6 +47,7 @@ class TdownloadTorrent(_PluginBase):
 
         if config:
             self._downloader = config.get("downloader")
+            self._enabled = config.get("enabled")
             self._is_paused = config.get("is_paused")
             self._save_path = config.get("save_path")
             self._mp_path = config.get("mp_path")
@@ -62,7 +64,8 @@ class TdownloadTorrent(_PluginBase):
                 "save_path": self._save_path,
                 "mp_path": self._mp_path,
                 "is_paused": self._is_paused,
-                "interaction": self._interaction
+                "interaction": self._interaction,
+                "enabled": self._enabled
             })
 
     def process_torrent(self, torrent_url):
@@ -103,8 +106,9 @@ class TdownloadTorrent(_PluginBase):
             logger.error(f"种子添加下载失败 {torrent_url} 保存位置 {download_dir}")
             msg = f"种子添加下载失败 {torrent_url} 保存位置 {download_dir}"
             return msg
+
     def get_state(self) -> bool:
-        return False
+        return self._enabled
 
     @eventmanager.register(EventType.UserMessage)
     def msgLink(self, event):
@@ -154,6 +158,48 @@ class TdownloadTorrent(_PluginBase):
             {
                 'component': 'VForm',
                 'content': [
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VSwitch',
+                                        'props': {
+                                            'model': 'enabled',
+                                            'label': '启用插件',
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VRow',
+                                'content': [
+                                    {
+                                        'component': 'VCol',
+                                        'props': {
+                                            'cols': 12,
+                                            'md': 4
+                                        },
+                                        'content': [
+                                            {
+                                                'component': 'VSwitch',
+                                                'props': {
+                                                    'model': 'interaction',
+                                                    'label': '监听交互',
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
                     {
                         'component': 'VRow',
                         'content': [
@@ -248,27 +294,6 @@ class TdownloadTorrent(_PluginBase):
                                             'rows': '3',
                                             'label': '种子链接',
                                             'placeholder': '种子链接，一行一个'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'interaction',
-                                            'label': '监听交互',
                                         }
                                     }
                                 ]
