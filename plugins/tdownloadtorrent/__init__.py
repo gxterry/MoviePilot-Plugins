@@ -125,7 +125,7 @@ class TdownloadTorrent(_PluginBase):
         if channel and channel != MessageChannel.Wechat:
             logger.error("非微信渠道")
             return
-        if not text and not text.startswith("下载"):
+        if not text and not text.startswith("种子"):
             logger.error("无需处理的消息")
             return
         text = text[2:]
