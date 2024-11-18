@@ -343,6 +343,7 @@ class TdownloadTorrent(_PluginBase):
         ], {
             "downloader": "qb",
             "is_paused": False,
+            "interaction": False,
             "save_path": "",
             "mp_path": "",
             "torrent_urls": ""
