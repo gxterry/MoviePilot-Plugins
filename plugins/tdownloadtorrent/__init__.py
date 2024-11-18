@@ -106,7 +106,7 @@ class TdownloadTorrent(_PluginBase):
     def get_state(self) -> bool:
         return False
 
-    @eventmanager.register(EventType.NoticeMessage)
+    @eventmanager.register(EventType.UserMessage)
     def msgLink(self, event):
         """
         远端交互种子连接
