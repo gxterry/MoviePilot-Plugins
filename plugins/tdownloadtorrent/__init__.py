@@ -69,7 +69,6 @@ class TdownloadTorrent(_PluginBase):
             })
 
     def process_torrent(self, torrent_url):
-        logger.error(f"参数----- {self._downloader } --{self._save_path}--{ self._mp_path}")
         msg = None
         # 获取种子对应站点cookie
         domain = StringUtils.get_url_domain(torrent_url)
@@ -77,14 +76,12 @@ class TdownloadTorrent(_PluginBase):
             logger.error(f"种子 {torrent_url} 获取站点域名失败，跳过处理")
             msg = f"种子 {torrent_url} 获取站点域名失败，跳过处理"
             return msg
-
         # 查询站点
         site = self.site.get_by_domain(domain)
         if not site or not site.cookie:
             logger.error(f"种子 {torrent_url} 获取站点cookie失败，跳过处理")
             msg = f"种子 {torrent_url} 获取站点cookie失败，跳过处理"
             return msg
-
         # 添加下载
         download_dir = self._save_path or self._mp_path
         if str(self._downloader) == "qb":
@@ -97,7 +94,6 @@ class TdownloadTorrent(_PluginBase):
                                           is_paused=self._is_paused,
                                           download_dir=download_dir,
                                           cookie=site.cookie)
-
         if torrent:
             logger.info(f"种子添加下载成功 {torrent_url} 保存位置 {download_dir}")
             msg = f"种子添加下载成功 {torrent_url} 保存位置 {download_dir}"
@@ -125,15 +121,14 @@ class TdownloadTorrent(_PluginBase):
         channel = data.get("channel")
         text = data.get("text")
         userid = data.get("userid")
-        logger.info(f"进入消息：{channel}--{text}")
+
         if channel and channel != MessageChannel.Wechat:
             logger.error("非微信渠道")
             return
-        if not text and not text.startswith("种子"):
+        if not text and not text.startswith("# "):
             logger.error("无需处理的消息")
             return
         text = text[2:]
-        logger.info(f"进入消息：2--{text}")
         msg = self.process_torrent(text)
         self.post_message(
             mtype=NotificationType.Plugin,
