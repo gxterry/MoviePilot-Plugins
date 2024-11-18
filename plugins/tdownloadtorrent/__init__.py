@@ -8,7 +8,7 @@ from app.schemas.types import SystemConfigKey
 from app.utils.string import StringUtils
 from app.core.event import eventmanager
 from app.schemas.types import EventType,MessageChannel,NotificationType
-class TDownloadTorrent(_PluginBase):
+class TdownloadTorrent(_PluginBase):
     # 插件名称
     plugin_name = "添加种子下载（临时测试)"
     # 插件描述

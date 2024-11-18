@@ -33,7 +33,7 @@
         "author": "gxterry",
         "level": 1
     },
-    "TDownloadTorrent": {
+    "TdownloadTorrent": {
         "name": "添加种子下载（临时测试)",
         "description": "临时测试",
         "labels": "站点",
