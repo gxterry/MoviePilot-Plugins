@@ -117,7 +117,7 @@ class TdownloadTorrent(_PluginBase):
         """
         logger.info(f"进入消息")
         msg = None
-        if self._interaction:
+        if not self._interaction:
             logger.error("插件未启用或未开启交互")
             return
             # 消息体
