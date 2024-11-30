@@ -3,14 +3,14 @@
         "name": "刷新极影视",
         "description": "定时刷新极影视",
         "labels": "极空间",
-        "version": "1.5.1",
+        "version": "1.5.2",
         "icon": "https://raw.githubusercontent.com/gxterry/MoviePilot-Plugins/main/icons/Zspace_B.png",
         "author": "gxterry",
         "level": 1,
         "history": {
+            "v1.5.2": "移除非必要属性",
             "v1.5.1": "修复入库失败数据过滤异常"
-        },
-        "v2": true
+        }
     },
     "DockerCopilotHelper": {
         "name": "DC助手",
