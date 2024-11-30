@@ -9,7 +9,8 @@
         "level": 1,
         "history": {
             "v1.5.1": "修复入库失败数据过滤异常"
-        }
+        },
+        "v2": true
     },
     "DockerCopilotHelper": {
         "name": "DC助手",
@@ -22,7 +23,8 @@
         "history": {
             "v1.1.2": "修复网络异常导致的数据无法加载问题",
             "v1.1.1": "修复面板加载异常"
-        }
+        },
+        "v2": true
     },
     "ZspaceSysMsg": {
         "name": "极空间系统通知",
@@ -31,7 +33,8 @@
         "version": "1.0",
         "icon": "Zspace_A.png",
         "author": "gxterry",
-        "level": 1
+        "level": 1,
+        "v2": true
     }
 }
 
