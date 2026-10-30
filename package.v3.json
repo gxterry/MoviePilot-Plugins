@@ -1,5 +1,5 @@
 {
-    "CloudLinkMonitor": {
+    "CloudLinkMonitordiy": {
         "name": "目录实时监控(改自用)",
         "description": "在thsrite佬监控目录文件基础上回退V2版兼容自动识别目录，自用。",
         "labels": "云盘,工具",
