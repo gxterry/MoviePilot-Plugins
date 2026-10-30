@@ -1,0 +1,16 @@
+{
+  "CloudLinkMonitor": {
+    "name": "目录实时监控(改自用)",
+    "description": "在thsrite佬监控目录文件基础上回退V2版兼容自动识别目录，自用。",
+    "labels": "云盘,工具",
+    "version": "3.0.2-diy",
+    "icon": "Linkease_A.png",
+    "author": "thsrite",
+    "level": 1,
+    "release": true,
+    "system_version": ">=3.0.0",
+    "history": {
+      "v3.0.2-diy": "因不满足个人使用，又不想劳烦大佬改回去（大佬特意去除肯定是有原因的，加回去违背本意）在thsrite佬监控目录文件基础上回退V2版兼容自动识别目录，自用。感谢thsrite源码开发！",
+    }
+  }
+}
