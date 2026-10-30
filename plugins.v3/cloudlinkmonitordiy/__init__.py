@@ -68,9 +68,9 @@ class CloudLinkMonitorDIY(_PluginBase):
     # 插件版本
     plugin_version = "3.0.211"
     # 插件作者
-    plugin_author = "thsrite"
+    plugin_author = "thsrite,gxterry"
     # 作者主页
-    author_url = "https://github.com/thsrite"
+    author_url = "https://github.com/gxterry/MoviePilot-Plugins"
     # 插件配置项ID前缀
     plugin_config_prefix = "cloudlinkmonitordiy_"
     # 加载顺序
